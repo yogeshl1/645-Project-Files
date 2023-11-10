@@ -16,18 +16,41 @@ public class MainActivity extends AppCompatActivity {
 
     private ListView restaurantListView;
     private ArrayList<Restaurant> restaurantList;
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    restaurantListView = findViewById(R.id.restaurantListView);
+    restaurantList = new ArrayList<>();
 
-        restaurantListView = findViewById(R.id.restaurantListView);
-        restaurantList = new ArrayList<>();
+    // Fetch restaurant data from API using Retrofit
+    ApiService apiService = RetrofitClientInstance.getRetrofitInstance().create(ApiService.class);
+    Call<List<Restaurant>> call = apiService.getRestaurants();
 
-        // Fetch restaurant data from API
-        new FetchRestaurantsTask().execute("API_ENDPOINT_URL");
-    }
+    call.enqueue(new Callback<List<Restaurant>>() {
+        @Override
+        public void onResponse(Call<List<Restaurant>> call, Response<List<Restaurant>> response) {
+            if (response.isSuccessful()) {
+                List<Restaurant> restaurants = response.body();
+                if (restaurants != null) {
+                    restaurantList.addAll(restaurants);
+                    // Update your UI with the fetched restaurant data here
+                    RestaurantAdapter adapter = new RestaurantAdapter(MainActivity.this, R.layout.restaurant_item, restaurantList);
+                    restaurantListView.setAdapter(adapter);
+                }
+            } else {
+                // Handle unsuccessful response here
+            }
+        }
+
+        @Override
+        public void onFailure(Call<List<Restaurant>> call, Throwable t) {
+            // Handle errors here
+        }
+    });
+}
+
 
    private class FetchMenuItemsTask extends AsyncTask<Long, Void, String> {
     @Override
